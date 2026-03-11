@@ -39,6 +39,9 @@ The workflow is very simple:
     - Individually adjust the level of the source audio and of the synthesized transcription
 - Once you're satisfied, export the MIDI transcription with a simple drag and drop from the plugin to a MIDI track.
 
+For headless use, the project now also builds a `NeuralNoteCLI` console app that converts an input audio file
+directly to a MIDI file.
+
 **Watch our presentation video for the Neural Audio Plugin
 competition [here](https://www.youtube.com/watch?v=6_MC0_aG_DQ)**.
 
@@ -69,6 +72,24 @@ with [ort-builder](https://github.com/olilarkin/ort-builder)) before calling CMa
 
 ```
 $ ./build.sh
+```
+
+This builds both the standalone app/plugin targets and the headless CLI. After the build completes, you can run:
+
+```bash
+./build/NeuralNoteCLI_artefacts/Release/NeuralNoteCLI input.wav output.mid
+```
+
+Optional flags:
+
+```bash
+./build/NeuralNoteCLI_artefacts/Release/NeuralNoteCLI input.wav output.mid \
+  --note-sensitivity 0.7 \
+  --split-sensitivity 0.5 \
+  --min-note-duration-ms 125 \
+  --pitch-bend single \
+  --bpm 120 \
+  --time-signature 4/4
 ```
 
 #### Windows

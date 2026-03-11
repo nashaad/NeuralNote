@@ -57,3 +57,4 @@ if test "$(uname -s)" = "Linux"; then
 else
 	echo "Run: ./build/NeuralNote_artefacts/Release/Standalone/NeuralNote.app/Contents/MacOS/NeuralNote"
 fi
+echo "Run headless: ./build/NeuralNoteCLI_artefacts/Release/NeuralNoteCLI input.wav output.mid"

@@ -15,6 +15,7 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "10.11" CACHE STRING "Minimum OS X deployment ve
 option(UniversalBinary "Build universal binary for mac" OFF)
 option(RTNeural_Release "When CMAKE_BUILD_TYPE=Debug, overwrite it to Release for RTNeural only" OFF)
 option(LTO "Enable Link Time Optimization" ON)
+option(BUILD_CLI "Build the neuralnote_cli headless command-line tool" ON)
 
 if (UniversalBinary)
     set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE INTERNAL "")
@@ -155,6 +156,63 @@ if (${LTO})
     message(STATUS "Link Time Optimization (LTO) enabled")
 endif ()
 
+if (BUILD_CLI)
+    set(CliTargetName NeuralNoteCLI)
+
+    juce_add_console_app(${CliTargetName} PRODUCT_NAME "neuralnote_cli")
+
+    juce_generate_juce_header(${CliTargetName})
+
+    file(GLOB_RECURSE SOURCES_CLI
+            ${CMAKE_CURRENT_LIST_DIR}/Cli/*.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/Lib/*.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/NeuralNote/Source/MidiFile/*.cpp)
+    list(REMOVE_ITEM SOURCES_CLI ${CMAKE_CURRENT_LIST_DIR}/Lib/Model/BasicPitchCNN.cpp)
+
+    target_sources(${CliTargetName} PRIVATE ${SOURCES_CLI})
+
+    foreach (dir ${lib_dirs})
+        IF (IS_DIRECTORY ${dir})
+            target_include_directories(${CliTargetName} PRIVATE ${dir})
+        ELSE ()
+            CONTINUE()
+        ENDIF ()
+    endforeach ()
+
+    foreach (dir ${source_dirs})
+        IF (IS_DIRECTORY ${dir})
+            target_include_directories(${CliTargetName} PRIVATE ${dir})
+        ELSE ()
+            CONTINUE()
+        ENDIF ()
+    endforeach ()
+
+    target_include_directories(${CliTargetName} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/ThirdParty/onnxruntime/include)
+    target_include_directories(${CliTargetName} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/ThirdParty/minimp3)
+
+    target_compile_definitions(${CliTargetName}
+            PUBLIC
+            JUCE_WEB_BROWSER=0
+            JUCE_USE_CURL=0
+            PRIVATE
+            SAVE_DOWNSAMPLED_AUDIO=0
+            USE_TEST_NOTE_FRAME_TO_TIME=0)
+
+    target_link_libraries(${CliTargetName}
+            PRIVATE
+            juce::juce_audio_utils
+            juce::juce_dsp
+            BasicPitchCNN
+            onnxruntime
+            bin_data
+            PUBLIC
+            juce_recommended_config_flags)
+
+    if (${LTO})
+        target_link_libraries(${CliTargetName} PUBLIC juce_recommended_lto_flags)
+    endif ()
+endif ()
+
 if (BUILD_UNIT_TESTS)
     add_subdirectory(Tests)
 endif ()
@@ -169,4 +227,3 @@ if (WIN32)
     target_compile_definitions(${BaseTargetName} PUBLIC JUCE_ASIO=1)
     target_include_directories(${BaseTargetName} PRIVATE ThirdParty/ASIO/common)
 endif ()
-
